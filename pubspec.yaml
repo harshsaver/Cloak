@@ -1,0 +1,32 @@
+name: cloak
+description: "Cloak — a beautiful home for your AI conversations, with a stand-in for the details you'd rather keep to yourself."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+  path_provider: ^2.1.4
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  socks5_proxy: ^1.0.6
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/portraits/
+    - assets/brand/
