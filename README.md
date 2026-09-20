@@ -1,29 +1,27 @@
 ![Cloak — Good things start with a chat.](docs/assets/banner.png)
 
 <p align="center">
-  <strong>Big ideas. Fewer personal details.</strong><br>
-  A beautiful home for your AI conversations. Cloak for the details you’d rather keep to yourself.
+  <strong>Chat freely. Share only what you choose.</strong><br>
+  Cloak swaps your personal details for a realistic stand-in — and reshapes your connection — before anything reaches the AI.
 </p>
 
 <p align="center">
-  <a href="https://github.com/harshsaver/Cloak/releases/latest">
-    <img src="docs/assets/download-mac.svg" alt="Download Cloak — macOS, iOS, Android &amp; Windows" width="320" height="76">
-  </a>
-  <br>
-  <sub>macOS · iOS · Android · Windows. One chat, everywhere.</sub>
+  <sub>Native Alt&nbsp;ID&nbsp;+&nbsp;Cloak · User-Agent &amp; HTTP/SOCKS5 obfuscation · macOS · iOS · Android · Windows</sub>
 </p>
 
 <p align="center">
   <a href="#cloak-on-share-less"><strong>Meet Cloak</strong></a>
+  &nbsp; · &nbsp;
+  <a href="#make-the-connection-yours">Network obfuscation</a>
   &nbsp; · &nbsp;
   <a href="#say-hello">Start chatting</a>
   &nbsp; · &nbsp;
   <a href="#build-it-yourself">Build it yourself</a>
 </p>
 
-Plan a weekend. Untangle a thought. Get past the blank page.
+Bring your question — the email, the plan, the first draft — without handing over who you are.
 
-Cloak brings the AI models you choose into an app that feels as easy as sending a message — on your Mac, your phone, and your PC. With **Cloak**, you can give personal details a stand-in before they reach the AI. Bring your question. Share a little less of yourself.
+**Cloak is a chat app built privacy-first.** A native **Alt ID** replaces matching names, emails, and other personal details before they’re sent, and restores them in the reply. The built-in **Network** panel lets you present a different User-Agent and route requests through an HTTP or SOCKS5 proxy. Then pick any model from your provider and chat as easily as sending a message — on your Mac, your phone, and your PC.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/chat-dark.png">
@@ -74,6 +72,18 @@ Cloak can miss details. Review sensitive text before sending. Your saved chats k
 
 <br clear="all">
 
+## Make the connection yours.
+
+<a href="docs/assets/network-panel.png">
+  <img align="right" src="docs/assets/network-panel.png" alt="The Network panel with Chrome on Android selected, an Android phone sending a green beam toward a globe, and proxy controls." width="260">
+</a>
+
+Cloak isn’t only about the words you send. Open the **Network** panel to present a different **User-Agent** — pick a preset for Chrome, Safari, an iPhone or Android, or type your own — and route provider requests through an **HTTP or SOCKS5 proxy**.
+
+It applies to your model catalogs and chat requests alike, so what reaches the provider looks the way you want it to. Obfuscation is built in, not bolted on.
+
+<br clear="all">
+
 ## Keep the good conversations going.
 
 Pick up yesterday’s idea. Start something new. Your chats save on your device, ready when you come back.
@@ -86,17 +96,9 @@ Your choice of provider. Your choice of model. One place to chat.
 
 ## A few thoughtful extras.
 
-<a href="docs/assets/network-panel.png">
-  <img align="right" src="docs/assets/network-panel.png" alt="The Network panel with Chrome on Android selected, an Android phone sending a green beam toward a globe, and proxy controls." width="260">
-</a>
-
-**Make the connection yours.** Choose a User-Agent preset or set an HTTP / SOCKS5 provider proxy in the Network panel.
-
-**Bring the web along.** Add search results to your question when you need more context. Web search uses a separately installed TinyFish tool (desktop).
+**Bring the web along.** Add search results to your question when you need more context — with your Cloak replacements applied to the query. Web search uses a separately installed TinyFish tool (desktop).
 
 **Keep the familiar comforts.** Keys in your system keystore by default, with a local-file option for no prompts. Chat history on your device. Alt ID opens without a password.
-
-<br clear="all">
 
 ## Say hello.
 
