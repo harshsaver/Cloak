@@ -7,6 +7,7 @@ import '../state/conversation_store.dart';
 import 'chat_screen.dart';
 import 'conversation_sidebar.dart';
 import 'settings_sheet.dart';
+import 'theme.dart';
 import 'widgets.dart';
 
 class WorkspaceScreen extends StatefulWidget {
@@ -81,8 +82,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final errorBar = (store.errorText != null && store.isReadBlocked) ? _storeError(store) : null;
 
     if (!wide) {
+      final bg = CloakColors.surface(Theme.of(context).brightness);
       return Scaffold(
+        backgroundColor: bg,
         appBar: AppBar(
+          backgroundColor: bg,
           scrolledUnderElevation: 0,
           titleSpacing: 0,
           leading: IconButton(
