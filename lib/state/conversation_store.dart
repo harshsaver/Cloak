@@ -38,6 +38,13 @@ class ConversationStore extends ChangeNotifier {
 
   File get fileForDisplay => _file ?? File('conversations.json');
 
+  /// Every conversation across all providers, most recent first.
+  List<Conversation> all() {
+    final items = List.of(_conversations);
+    items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return items;
+  }
+
   List<Conversation> list(String providerId) {
     final items = _conversations.where((c) => c.providerId == providerId).toList();
     items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));

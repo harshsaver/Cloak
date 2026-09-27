@@ -71,8 +71,8 @@ class Conversation {
         messages: ((json['messages'] as List?) ?? [])
             .map((m) => ChatMessage.fromJson(Map<String, dynamic>.from(m as Map)))
             .toList(),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
+        createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+        updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
       );
 }
 

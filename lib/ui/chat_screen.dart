@@ -26,12 +26,16 @@ class ChatScreen extends StatefulWidget {
 
   /// Show a back button in the header (true when pushed as a full page on phones).
   final bool showBack;
+
+  /// Lets the model picker move this chat to another provider.
+  final ValueChanged<AiProvider>? onProviderChange;
   const ChatScreen({
     super.key,
     required this.provider,
     required this.apiKey,
     required this.conversationId,
     this.showBack = false,
+    this.onProviderChange,
   });
 
   @override
@@ -164,7 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 9),
             titleText,
             const SizedBox(width: 10),
-            ConstrainedBox(constraints: const BoxConstraints(maxWidth: 260), child: ModelPickerButton(vm: _vm)),
+            ConstrainedBox(constraints: const BoxConstraints(maxWidth: 260), child: ModelPickerButton(vm: _vm, onProviderChange: widget.onProviderChange)),
             const SizedBox(width: 4),
             ..._inlineTools(),
           ]);
@@ -195,7 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
         Expanded(
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: _vm.isStreaming ? null : () => showModelPicker(context, _vm),
+            onTap: _vm.isStreaming ? null : () => showModelPicker(context, _vm, onProviderChange: widget.onProviderChange),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               Text(
                 title.isEmpty ? 'New message' : title,
@@ -536,7 +540,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (_vm.selectedModel.isEmpty) {
-      chips.add(chip(Icons.tune_rounded, 'Choose a model', onTap: () => showModelPicker(context, _vm)));
+      chips.add(chip(Icons.tune_rounded, 'Choose a model', onTap: () => showModelPicker(context, _vm, onProviderChange: widget.onProviderChange)));
     }
     if (_vm.cloak) {
       if (_vm.canSend) chips.add(chip(Icons.visibility_rounded, 'Review', onTap: _reviewCloak));
@@ -599,7 +603,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   title: const Text('Model'),
                   subtitle: Text(_vm.selectedModel.isEmpty ? 'Choose a model' : _vm.selectedModel,
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                  onTap: () => then(() => showModelPicker(context, _vm)),
+                  onTap: () => then(() => showModelPicker(context, _vm, onProviderChange: widget.onProviderChange)),
                 ),
                 ListTile(
                   enabled: _vm.canRetry,

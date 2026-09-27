@@ -12,21 +12,26 @@ import 'theme.dart';
 import 'widgets.dart';
 
 class ConversationSidebar extends StatefulWidget {
-  final AiProvider provider;
+  /// null = every provider's chats in one list (the app's home).
+  final AiProvider? provider;
   final String? selectedId;
   final ValueChanged<String> onSelect;
-  final ValueChanged<AiProvider> onSwitchProvider;
-  final VoidCallback onAllProviders;
+  final ValueChanged<AiProvider>? onSwitchProvider;
+  final VoidCallback? onAllProviders;
+
+  /// Creates the new chat (unified home picks the provider). Falls back to [provider].
+  final VoidCallback? onNewChat;
 
   /// The provider switcher + settings footer. Phones move these into the app bar.
   final bool showFooter;
   const ConversationSidebar({
     super.key,
-    required this.provider,
+    this.provider,
     required this.selectedId,
     required this.onSelect,
-    required this.onSwitchProvider,
-    required this.onAllProviders,
+    this.onSwitchProvider,
+    this.onAllProviders,
+    this.onNewChat,
     this.showFooter = true,
   });
 
@@ -53,7 +58,11 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
   void _newChat() {
     final store = context.read<ConversationStore>();
     _query.clear();
-    final conversation = store.newOrReuseEmpty(providerId: widget.provider.id, model: _currentModel);
+    if (widget.onNewChat != null) {
+      widget.onNewChat!();
+      return;
+    }
+    final conversation = store.newOrReuseEmpty(providerId: widget.provider!.id, model: _currentModel);
     widget.onSelect(conversation.id);
   }
 
@@ -62,8 +71,9 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
     final scheme = Theme.of(context).colorScheme;
     final store = context.watch<ConversationStore>();
     final query = _query.text.trim().toLowerCase();
-    final items = store
-        .list(widget.provider.id)
+    final items = (widget.provider == null ? store.all() : store.list(widget.provider!.id))
+        // The unified home hides untouched drafts except the one that's open.
+        .where((c) => widget.provider != null || c.messages.isNotEmpty || c.id == widget.selectedId)
         .where((c) =>
             query.isEmpty || c.title.toLowerCase().contains(query) || c.model.toLowerCase().contains(query))
         .toList();
@@ -129,6 +139,7 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
                         conversation: conversation,
                         draft: store.draft(conversation.id),
                         selected: conversation.id == widget.selectedId,
+                        showProviderBadge: widget.provider == null,
                         onTap: () => widget.onSelect(conversation.id),
                         onRename: () => _rename(conversation),
                         onDelete: () => _delete(conversation),
@@ -149,11 +160,12 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(children: [
-        ProviderSwitcher(
-          provider: widget.provider,
-          onSwitch: widget.onSwitchProvider,
-          onAllProviders: widget.onAllProviders,
-        ),
+        if (widget.provider != null)
+          ProviderSwitcher(
+            provider: widget.provider!,
+            onSwitch: widget.onSwitchProvider ?? (_) {},
+            onAllProviders: widget.onAllProviders ?? () {},
+          ),
         const Spacer(),
         IconButton(
           tooltip: 'Settings',
@@ -202,7 +214,7 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
       final store = context.read<ConversationStore>();
       store.delete(conversation.id);
       if (widget.selectedId == conversation.id) {
-        final next = store.list(widget.provider.id);
+        final next = widget.provider == null ? store.all() : store.list(widget.provider!.id);
         if (next.isNotEmpty) widget.onSelect(next.first.id);
       }
     }
@@ -213,6 +225,7 @@ class _ConversationRow extends StatelessWidget {
   final Conversation conversation;
   final String draft;
   final bool selected;
+  final bool showProviderBadge;
   final VoidCallback onTap;
   final VoidCallback onRename;
   final VoidCallback onDelete;
@@ -221,6 +234,7 @@ class _ConversationRow extends StatelessWidget {
     required this.conversation,
     required this.draft,
     required this.selected,
+    this.showProviderBadge = false,
     required this.onTap,
     required this.onRename,
     required this.onDelete,
@@ -259,7 +273,21 @@ class _ConversationRow extends StatelessWidget {
     final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PortraitAvatar(number: portraitNumber(conversation.id), size: avatar),
+        Stack(clipBehavior: Clip.none, children: [
+          PortraitAvatar(number: portraitNumber(conversation.id), size: avatar),
+          if (showProviderBadge && AiProvider.byId(conversation.providerId) != null)
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
+                ),
+                child: ProviderGlyph(provider: AiProvider.byId(conversation.providerId)!, size: avatar * 0.36),
+              ),
+            ),
+        ]),
         SizedBox(width: compact ? 12 : 10),
         Expanded(
           child: Column(

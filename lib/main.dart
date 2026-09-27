@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'demo.dart';
 import 'state/app_state.dart';
 import 'state/conversation_store.dart';
-import 'ui/home_screen.dart';
+import 'ui/chats_screen.dart';
 import 'ui/theme.dart';
 
 void main() {
@@ -55,6 +55,6 @@ class _RootState extends State<_Root> {
       _demoApplied = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => applyDemo(app, store));
     }
-    return const HomeScreen();
+    return const ChatsScreen();
   }
 }

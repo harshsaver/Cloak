@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
+import '../models/provider.dart';
+import '../state/app_state.dart';
 import '../state/chat_view_model.dart';
+import 'settings_sheet.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
 /// The compact "Model ▾" button shown in the conversation header.
 class ModelPickerButton extends StatelessWidget {
   final ChatViewModel vm;
-  const ModelPickerButton({super.key, required this.vm});
+  final ValueChanged<AiProvider>? onProviderChange;
+  const ModelPickerButton({super.key, required this.vm, this.onProviderChange});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +23,7 @@ class ModelPickerButton extends StatelessWidget {
       builder: (context, _) {
         return InkWell(
           borderRadius: BorderRadius.circular(7),
-          onTap: vm.isStreaming ? null : () => showModelPicker(context, vm),
+          onTap: vm.isStreaming ? null : () => showModelPicker(context, vm, onProviderChange: onProviderChange),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
             decoration: BoxDecoration(
@@ -49,7 +55,7 @@ class ModelPickerButton extends StatelessWidget {
 }
 
 /// Opens the model picker: a tall bottom sheet on phones, a dialog on desktop.
-Future<void> showModelPicker(BuildContext context, ChatViewModel vm) {
+Future<void> showModelPicker(BuildContext context, ChatViewModel vm, {ValueChanged<AiProvider>? onProviderChange}) {
   if (isCompact(context)) {
     return showModalBottomSheet<void>(
       context: context,
@@ -60,18 +66,19 @@ Future<void> showModelPicker(BuildContext context, ChatViewModel vm) {
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
         child: SizedBox(
           height: MediaQuery.sizeOf(sheet).height * 0.78,
-          child: _ModelPickerDialog(vm: vm, sheet: true),
+          child: _ModelPickerDialog(vm: vm, sheet: true, onProviderChange: onProviderChange),
         ),
       ),
     );
   }
-  return showDialog(context: context, builder: (_) => _ModelPickerDialog(vm: vm));
+  return showDialog(context: context, builder: (_) => _ModelPickerDialog(vm: vm, onProviderChange: onProviderChange));
 }
 
 class _ModelPickerDialog extends StatefulWidget {
   final ChatViewModel vm;
   final bool sheet;
-  const _ModelPickerDialog({required this.vm, this.sheet = false});
+  final ValueChanged<AiProvider>? onProviderChange;
+  const _ModelPickerDialog({required this.vm, this.sheet = false, this.onProviderChange});
 
   @override
   State<_ModelPickerDialog> createState() => _ModelPickerDialogState();
@@ -98,6 +105,7 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.vm;
+    final app = context.watch<AppState>();
     return AnimatedBuilder(
       animation: vm,
       builder: (context, _) {
@@ -111,7 +119,8 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
                 children: [
                   Row(
                     children: [
-                      const Text('Models', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                      Text(widget.onProviderChange != null ? 'Provider & model' : 'Models',
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                       const Spacer(),
                       if (vm.isLoadingModels)
                         const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
@@ -122,6 +131,33 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
                       ),
                     ],
                   ),
+                  if (widget.onProviderChange != null) ...[
+                    const SizedBox(height: 4),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: [
+                        for (final p in AiProvider.all)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ChoiceChip(
+                              avatar: ProviderGlyph(provider: p, size: 20),
+                              label: Text(app.hasKey(p) ? p.name : '${p.name} · Add key'),
+                              selected: p == vm.provider,
+                              onSelected: (_) {
+                                if (p == vm.provider) return;
+                                Navigator.of(context).pop();
+                                // Never strand a chat on a provider it can't talk to.
+                                if (!app.hasKey(p)) {
+                                  showSettingsSheet(context);
+                                } else {
+                                  widget.onProviderChange!(p);
+                                }
+                              },
+                            ),
+                          ),
+                      ]),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   TextField(
                     controller: _search,
