@@ -21,12 +21,16 @@ class HomeScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth >= 720 ? 2 : 1;
+            final pad = columns == 1 ? 18.0 : 28.0;
+            const gap = 16.0;
+            final innerW = constraints.maxWidth.clamp(0.0, 1120.0) - pad * 2;
+            final cardW = columns == 1 ? innerW : (innerW - gap) / 2;
             return SingleChildScrollView(
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1120),
                   child: Padding(
-                    padding: const EdgeInsets.all(28),
+                    padding: EdgeInsets.all(pad),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -57,17 +61,16 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        GridView.count(
-                          crossAxisCount: columns,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisSpacing: 18,
-                          mainAxisSpacing: 18,
-                          childAspectRatio: columns == 1 ? 2.4 : 1.9,
+                        const SizedBox(height: 22),
+                        Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
                           children: [
                             for (final provider in AiProvider.all)
-                              _ProviderCard(provider: provider, onTap: () => _open(context, provider)),
+                              SizedBox(
+                                width: cardW,
+                                child: _ProviderCard(provider: provider, onTap: () => _open(context, provider)),
+                              ),
                           ],
                         ),
                       ],
@@ -119,6 +122,7 @@ class _ProviderCardState extends State<_ProviderCard> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +161,7 @@ class _ProviderCardState extends State<_ProviderCard> {
               const SizedBox(height: 4),
               Text(widget.provider.tagline,
                   style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
-              const Spacer(),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Text('Open chat',

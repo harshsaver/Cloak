@@ -44,10 +44,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     setState(() => _selectedId = id);
     final key = context.read<AppState>().apiKey(widget.provider);
     if (key == null) return;
+    // ChatScreen renders its own responsive header (with a back button), so no AppBar.
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => Scaffold(
-        appBar: AppBar(title: Text(widget.provider.name), scrolledUnderElevation: 0),
-        body: SafeArea(child: ChatScreen(key: ValueKey(id), provider: widget.provider, apiKey: key, conversationId: id)),
+        body: SafeArea(
+          child: ChatScreen(
+            key: ValueKey(id),
+            provider: widget.provider,
+            apiKey: key,
+            conversationId: id,
+            showBack: true,
+          ),
+        ),
       ),
     ));
   }

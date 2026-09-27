@@ -22,7 +22,16 @@ class ChatScreen extends StatefulWidget {
   final AiProvider provider;
   final String apiKey;
   final String conversationId;
-  const ChatScreen({super.key, required this.provider, required this.apiKey, required this.conversationId});
+
+  /// Show a back button in the header (true when pushed as a full page on phones).
+  final bool showBack;
+  const ChatScreen({
+    super.key,
+    required this.provider,
+    required this.apiKey,
+    required this.conversationId,
+    this.showBack = false,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -111,36 +120,61 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _header(ConversationStore store) {
     final scheme = Theme.of(context).colorScheme;
     final title = store.conversation(widget.conversationId)?.title ?? '';
+    final compact = MediaQuery.of(context).size.width < 600;
+
+    final avatar = PortraitAvatar(number: portraitNumber(widget.conversationId), size: 30);
+    final titleText = Expanded(
+      child: Text(
+        title.isEmpty ? 'New message' : title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+    );
+
+    final Widget bar = compact
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(children: [
+                if (widget.showBack) _backButton(),
+                avatar,
+                const SizedBox(width: 9),
+                titleText,
+                _toolsMenu(),
+              ]),
+              const SizedBox(height: 8),
+              SizedBox(width: double.infinity, child: ModelPickerButton(vm: _vm)),
+            ],
+          )
+        : Row(children: [
+            if (widget.showBack) _backButton(),
+            avatar,
+            const SizedBox(width: 9),
+            titleText,
+            const SizedBox(width: 10),
+            ConstrainedBox(constraints: const BoxConstraints(maxWidth: 260), child: ModelPickerButton(vm: _vm)),
+            const SizedBox(width: 4),
+            ..._inlineTools(),
+          ]);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.fromLTRB(compact ? 6 : 16, 8, compact ? 8 : 16, 8),
       decoration: BoxDecoration(
         color: CloakColors.chrome(Theme.of(context).brightness),
         border: Border(bottom: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5))),
       ),
-      child: Row(
-        children: [
-          PortraitAvatar(number: portraitNumber(widget.conversationId), size: 30),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              title.isEmpty ? 'New message' : title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(width: 210, child: ModelPickerButton(vm: _vm)),
-          const SizedBox(width: 8),
-          _toolButton(Icons.person_outline_rounded, 'Alt ID', _openAltId),
-          _toolButton(Icons.lan_outlined, 'Network', _openNetwork),
-          _toolButton(Icons.help_outline_rounded, 'Provider docs',
-              () => launchUrl(Uri.parse(widget.provider.docsUrl), mode: LaunchMode.externalApplication)),
-          _toolButton(Icons.settings_outlined, 'Settings', () => showSettingsSheet(context)),
-        ],
-      ),
+      child: bar,
     );
   }
+
+  Widget _backButton() => IconButton(
+        tooltip: 'Back',
+        iconSize: 20,
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () => Navigator.of(context).maybePop(),
+      );
 
   Widget _toolButton(IconData icon, String tooltip, VoidCallback onTap) {
     return IconButton(
@@ -151,6 +185,45 @@ class _ChatScreenState extends State<ChatScreen> {
       onPressed: onTap,
     );
   }
+
+  List<Widget> _inlineTools() => [
+        _toolButton(Icons.person_outline_rounded, 'Alt ID', _openAltId),
+        _toolButton(Icons.lan_outlined, 'Network', _openNetwork),
+        _toolButton(Icons.help_outline_rounded, 'Provider docs',
+            () => launchUrl(Uri.parse(widget.provider.docsUrl), mode: LaunchMode.externalApplication)),
+        _toolButton(Icons.settings_outlined, 'Settings', () => showSettingsSheet(context)),
+      ];
+
+  Widget _toolsMenu() => PopupMenuButton<String>(
+        tooltip: 'More',
+        icon: const Icon(Icons.more_horiz_rounded, size: 22),
+        onSelected: (v) {
+          switch (v) {
+            case 'altid':
+              _openAltId();
+            case 'network':
+              _openNetwork();
+            case 'docs':
+              launchUrl(Uri.parse(widget.provider.docsUrl), mode: LaunchMode.externalApplication);
+            case 'settings':
+              showSettingsSheet(context);
+          }
+        },
+        itemBuilder: (context) => const [
+          PopupMenuItem(
+              value: 'altid',
+              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.person_outline_rounded), title: Text('Alt ID'))),
+          PopupMenuItem(
+              value: 'network',
+              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.lan_outlined), title: Text('Network'))),
+          PopupMenuItem(
+              value: 'docs',
+              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.help_outline_rounded), title: Text('Provider docs'))),
+          PopupMenuItem(
+              value: 'settings',
+              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.settings_outlined), title: Text('Settings'))),
+        ],
+      );
 
   Widget _errorBanner() {
     final scheme = Theme.of(context).colorScheme;
@@ -300,7 +373,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _optionsRow() {
     final scheme = Theme.of(context).colorScheme;
-    return Row(
+    // Wrap so a narrow phone flows controls to a second line instead of overflowing.
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         ChatOptionToggle(
           label: 'Web search',
@@ -309,7 +386,6 @@ class _ChatScreenState extends State<ChatScreen> {
           tooltip: 'Ground this reply with TinyFish web search.',
           onChanged: (v) => _vm.groundWithSearch = v,
         ),
-        const SizedBox(width: 7),
         ChatOptionToggle(
           label: 'Cloak',
           icon: Icons.visibility_off_rounded,
@@ -317,38 +393,38 @@ class _ChatScreenState extends State<ChatScreen> {
           tooltip: 'Replace configured and recognized personal values before sending.',
           onChanged: (v) => _vm.cloak = v,
         ),
-        if (_vm.cloak) ...[
-          const SizedBox(width: 7),
+        if (_vm.cloak)
           TextButton.icon(
             style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
             onPressed: _vm.canSend ? _reviewCloak : null,
             icon: const Icon(Icons.visibility_rounded, size: 14),
             label: const Text('Review Cloak', style: TextStyle(fontSize: 12)),
           ),
-        ],
-        const Spacer(),
         if (_vm.messages.isNotEmpty) ...[
           TextButton.icon(
-            style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+            style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
             onPressed: _vm.canRetry ? () => _vm.retry() : null,
             icon: const Icon(Icons.refresh_rounded, size: 14),
             label: const Text('Retry', style: TextStyle(fontSize: 12)),
           ),
-          IconButton(
-            tooltip: _follow ? 'Following' : 'Jump to latest',
-            iconSize: 16,
-            visualDensity: VisualDensity.compact,
-            color: _follow ? CloakColors.accent : scheme.onSurfaceVariant,
-            icon: const Icon(Icons.vertical_align_bottom_rounded),
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              foregroundColor: _follow ? CloakColors.accent : scheme.onSurfaceVariant,
+            ),
             onPressed: () {
               setState(() => _follow = true);
               if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
             },
+            icon: const Icon(Icons.vertical_align_bottom_rounded, size: 14),
+            label: Text(_follow ? 'Following' : 'Latest', style: const TextStyle(fontSize: 12)),
           ),
         ] else if (_vm.selectedModel.isEmpty)
-          Text('Choose a model above', style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant))
-        else
-          Text('Return to send · ⇧Return for a new line', style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            child: Text('Choose a model above', style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+          ),
       ],
     );
   }
