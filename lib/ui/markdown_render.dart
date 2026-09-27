@@ -263,7 +263,8 @@ class _MarkdownTextState extends State<MarkdownText> {
     final children = <InlineSpan>[];
     var first = true;
     for (final block in parseMarkdown(widget.text)) {
-      if (!first) children.add(TextSpan(text: '\n\n', style: base));
+      // Half-height gap between blocks (a full blank line reads too airy on phones).
+      if (!first) children.add(TextSpan(text: '\n\n', style: base.copyWith(fontSize: fs * 0.55, height: 1.0)));
       first = false;
       switch (block.kind) {
         case MdKind.paragraph:

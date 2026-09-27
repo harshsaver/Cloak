@@ -179,64 +179,79 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// iMessage-style header: back · (avatar over title, model line) · more.
+  /// Phone header: back · avatar · title/model (tap = model picker) · Cloak pill · Network.
   Widget _phoneHeader(String title, ColorScheme scheme) {
     final model = _vm.selectedModel;
     return Container(
-      padding: const EdgeInsets.fromLTRB(2, 4, 2, 8),
+      padding: const EdgeInsets.fromLTRB(4, 6, 8, 8),
       decoration: BoxDecoration(
         color: CloakColors.chrome(Theme.of(context).brightness),
         border: Border(bottom: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4))),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 92, child: Align(alignment: Alignment.centerLeft, child: widget.showBack ? _backButton() : null)),
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: _vm.isStreaming ? null : () => showModelPicker(context, _vm),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  PortraitAvatar(number: portraitNumber(widget.conversationId), size: 40),
-                  const SizedBox(height: 5),
-                  Text(
-                    title.isEmpty ? 'New message' : title,
+      child: Row(children: [
+        if (widget.showBack) _backButton() else const SizedBox(width: 8),
+        PortraitAvatar(number: portraitNumber(widget.conversationId), size: 36),
+        const SizedBox(width: 10),
+        Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: _vm.isStreaming ? null : () => showModelPicker(context, _vm),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text(
+                title.isEmpty ? 'New message' : title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 1),
+              Row(children: [
+                Flexible(
+                  child: Text(
+                    model.isEmpty ? 'Choose a model' : model.split('/').last,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12.5, color: model.isEmpty ? CloakColors.accent : scheme.onSurfaceVariant),
                   ),
-                  const SizedBox(height: 1),
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Flexible(
-                      child: Text(
-                        model.isEmpty ? 'Choose a model' : model,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: model.isEmpty ? CloakColors.accent : scheme.onSurfaceVariant),
-                      ),
-                    ),
-                    Icon(Icons.expand_more_rounded, size: 15, color: scheme.onSurfaceVariant),
-                  ]),
-                ]),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 92,
-            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              _headerIcon(
-                icon: _vm.cloak ? Icons.shield_rounded : Icons.shield_outlined,
-                tooltip: _vm.cloak ? 'Cloak is on — Alt ID' : 'Cloak is off — Alt ID',
-                active: _vm.cloak,
-                onTap: _openAltId,
-              ),
-              _headerIcon(icon: Icons.lan_outlined, tooltip: 'Network', onTap: _openNetwork),
+                ),
+                Icon(Icons.expand_more_rounded, size: 15, color: scheme.onSurfaceVariant),
+              ]),
             ]),
           ),
-        ],
+        ),
+        const SizedBox(width: 6),
+        _cloakPill(scheme),
+        IconButton(
+          tooltip: 'Network — User-Agent & proxy',
+          visualDensity: VisualDensity.compact,
+          icon: Icon(Icons.public_rounded, color: scheme.onSurfaceVariant),
+          onPressed: _openNetwork,
+        ),
+      ]),
+    );
+  }
+
+  /// "Cloak" pill with the mascot: blue when on, grey when off. Opens Alt ID.
+  Widget _cloakPill(ColorScheme scheme) {
+    final on = _vm.cloak;
+    return Tooltip(
+      message: on ? 'Cloak is on — edit your Alt ID' : 'Cloak is off — set up your Alt ID',
+      child: Material(
+        color: on ? CloakColors.accent : scheme.onSurface.withValues(alpha: 0.07),
+        shape: const StadiumBorder(),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: _openAltId,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(3, 3, 10, 3),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              CloakMascot(on: on, size: 22),
+              const SizedBox(width: 6),
+              Text('Cloak',
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: on ? Colors.white : scheme.onSurface)),
+            ]),
+          ),
+        ),
       ),
     );
   }
@@ -260,18 +275,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ]),
       ),
-    );
-  }
-
-  Widget _headerIcon({required IconData icon, required String tooltip, required VoidCallback onTap, bool active = false}) {
-    return IconButton(
-      tooltip: tooltip,
-      visualDensity: VisualDensity.compact,
-      style: active
-          ? IconButton.styleFrom(backgroundColor: CloakColors.accent.withValues(alpha: 0.14))
-          : null,
-      icon: Icon(icon, size: 22, color: active ? CloakColors.accent : null),
-      onPressed: onTap,
     );
   }
 
@@ -339,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
       child: ListView.builder(
         controller: _scroll,
         padding: isCompact(context)
-            ? const EdgeInsets.fromLTRB(12, 4, 12, 12)
+            ? const EdgeInsets.fromLTRB(16, 4, 16, 12)
             : const EdgeInsets.fromLTRB(20, 10, 20, 10),
         itemCount: _vm.messages.length + 1,
         itemBuilder: (context, index) {
@@ -446,16 +449,26 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 6),
             Tooltip(
               message: _vm.cloak ? 'Cloak on — tap to turn off' : 'Turn Cloak on',
-              child: _circleButton(
-                _vm.cloak ? Icons.visibility_off_rounded : Icons.visibility_outlined,
-                _vm.cloak ? CloakColors.accent : scheme.onSurface.withValues(alpha: 0.08),
-                () {
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () {
                   HapticFeedback.selectionClick();
                   _vm.cloak = !_vm.cloak;
                 },
-                iconColor: _vm.cloak ? Colors.white : scheme.onSurface,
-                size: 38,
-                iconSize: 20,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 38,
+                  height: 38,
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _vm.cloak ? CloakColors.accent : scheme.outlineVariant,
+                      width: _vm.cloak ? 2.5 : 1.5,
+                    ),
+                  ),
+                  child: CloakMascot(on: _vm.cloak, size: 30),
+                ),
               ),
             ),
             const SizedBox(width: 8),

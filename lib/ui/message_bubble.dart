@@ -85,8 +85,8 @@ class _MessageBubbleState extends State<MessageBubble> {
     final incoming = CloakColors.incomingBubble(brightness);
     final text = widget.message.text;
     final compact = isCompact(context);
-    final fontSize = compact ? 16.0 : 15.0;
-    final maxWidth = compact ? MediaQuery.sizeOf(context).width * (_isUser ? 0.78 : 0.86) : 640.0;
+    final fontSize = compact ? 15.5 : 15.0;
+    final maxWidth = compact ? MediaQuery.sizeOf(context).width * (_isUser ? 0.75 : 0.82) : 640.0;
 
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(19),
@@ -119,7 +119,7 @@ class _MessageBubbleState extends State<MessageBubble> {
         color: _isUser ? Colors.white : scheme.onSurface,
       );
       bubble = Container(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 15, vertical: _isUser ? 9 : 11),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 13 : 15, vertical: compact ? 8 : (_isUser ? 10 : 12)),
         decoration: BoxDecoration(color: _isUser ? CloakColors.bubbleBlue : incoming, borderRadius: radius),
         child: (_isUser || widget.isLive)
             // Phones use long-press for actions, so text isn't selectable there.
@@ -150,7 +150,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: compact ? 3 : 5, horizontal: compact ? 0 : 4),
+      padding: EdgeInsets.symmetric(vertical: compact ? 4 : 5, horizontal: compact ? 0 : 4),
       child: Align(
         alignment: _isUser ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(

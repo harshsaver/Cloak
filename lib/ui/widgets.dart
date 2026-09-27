@@ -236,3 +236,25 @@ class PanelCard extends StatelessWidget {
     );
   }
 }
+
+const ColorFilter _greyscale = ColorFilter.matrix(<double>[
+  0.2126, 0.7152, 0.0722, 0, 0, //
+  0.2126, 0.7152, 0.0722, 0, 0,
+  0.2126, 0.7152, 0.0722, 0, 0,
+  0, 0, 0, 1, 0,
+]);
+
+/// The disguised Cloak mascot as a status glyph: full colour when [on], greyscale when off.
+class CloakMascot extends StatelessWidget {
+  final bool on;
+  final double size;
+  const CloakMascot({super.key, required this.on, this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    final image = Image.asset('assets/brand/app_icon_1024.png', width: size, height: size, fit: BoxFit.cover);
+    return ClipOval(
+      child: on ? image : Opacity(opacity: 0.7, child: ColorFiltered(colorFilter: _greyscale, child: image)),
+    );
+  }
+}
