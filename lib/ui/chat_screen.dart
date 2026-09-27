@@ -191,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 48, child: widget.showBack ? _backButton() : null),
+          SizedBox(width: 92, child: Align(alignment: Alignment.centerLeft, child: widget.showBack ? _backButton() : null)),
           Expanded(
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
@@ -224,7 +224,18 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          SizedBox(width: 48, child: _toolsMenu()),
+          SizedBox(
+            width: 92,
+            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              _headerIcon(
+                icon: _vm.cloak ? Icons.shield_rounded : Icons.shield_outlined,
+                tooltip: _vm.cloak ? 'Cloak is on — Alt ID' : 'Cloak is off — Alt ID',
+                active: _vm.cloak,
+                onTap: _openAltId,
+              ),
+              _headerIcon(icon: Icons.lan_outlined, tooltip: 'Network', onTap: _openNetwork),
+            ]),
+          ),
         ],
       ),
     );
@@ -249,6 +260,18 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ]),
       ),
+    );
+  }
+
+  Widget _headerIcon({required IconData icon, required String tooltip, required VoidCallback onTap, bool active = false}) {
+    return IconButton(
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      style: active
+          ? IconButton.styleFrom(backgroundColor: CloakColors.accent.withValues(alpha: 0.14))
+          : null,
+      icon: Icon(icon, size: 22, color: active ? CloakColors.accent : null),
+      onPressed: onTap,
     );
   }
 
@@ -277,37 +300,6 @@ class _ChatScreenState extends State<ChatScreen> {
             () => launchUrl(Uri.parse(widget.provider.docsUrl), mode: LaunchMode.externalApplication)),
         _toolButton(Icons.settings_outlined, 'Settings', () => showSettingsSheet(context)),
       ];
-
-  Widget _toolsMenu() => PopupMenuButton<String>(
-        tooltip: 'More',
-        icon: const Icon(Icons.more_horiz_rounded, size: 22),
-        onSelected: (v) {
-          switch (v) {
-            case 'altid':
-              _openAltId();
-            case 'network':
-              _openNetwork();
-            case 'docs':
-              launchUrl(Uri.parse(widget.provider.docsUrl), mode: LaunchMode.externalApplication);
-            case 'settings':
-              showSettingsSheet(context);
-          }
-        },
-        itemBuilder: (context) => const [
-          PopupMenuItem(
-              value: 'altid',
-              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.person_outline_rounded), title: Text('Alt ID'))),
-          PopupMenuItem(
-              value: 'network',
-              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.lan_outlined), title: Text('Network'))),
-          PopupMenuItem(
-              value: 'docs',
-              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.help_outline_rounded), title: Text('Provider docs'))),
-          PopupMenuItem(
-              value: 'settings',
-              child: ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.settings_outlined), title: Text('Settings'))),
-        ],
-      );
 
   Widget _errorBanner() {
     final scheme = Theme.of(context).colorScheme;
@@ -451,6 +443,21 @@ class _ChatScreenState extends State<ChatScreen> {
               size: 38,
               iconSize: 24,
             ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message: _vm.cloak ? 'Cloak on — tap to turn off' : 'Turn Cloak on',
+              child: _circleButton(
+                _vm.cloak ? Icons.visibility_off_rounded : Icons.visibility_outlined,
+                _vm.cloak ? CloakColors.accent : scheme.onSurface.withValues(alpha: 0.08),
+                () {
+                  HapticFeedback.selectionClick();
+                  _vm.cloak = !_vm.cloak;
+                },
+                iconColor: _vm.cloak ? Colors.white : scheme.onSurface,
+                size: 38,
+                iconSize: 20,
+              ),
+            ),
             const SizedBox(width: 8),
             Expanded(child: fieldBox),
             const SizedBox(width: 8),
@@ -519,7 +526,6 @@ class _ChatScreenState extends State<ChatScreen> {
       chips.add(chip(Icons.tune_rounded, 'Choose a model', onTap: () => showModelPicker(context, _vm)));
     }
     if (_vm.cloak) {
-      chips.add(chip(Icons.visibility_off_rounded, 'Cloak on', onClose: () => _vm.cloak = false));
       if (_vm.canSend) chips.add(chip(Icons.visibility_rounded, 'Review', onTap: _reviewCloak));
     }
     if (_vm.groundWithSearch) {
@@ -597,6 +603,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   leading: const Icon(Icons.lan_outlined),
                   title: const Text('Network'),
                   onTap: () => then(_openNetwork),
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                ListTile(
+                  leading: const Icon(Icons.help_outline_rounded),
+                  title: Text('${widget.provider.name} docs'),
+                  onTap: () => then(() => launchUrl(Uri.parse(widget.provider.docsUrl),
+                      mode: LaunchMode.externalApplication)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings_outlined),
+                  title: const Text('Settings'),
+                  onTap: () => then(() => showSettingsSheet(context)),
                 ),
                 const SizedBox(height: 8),
               ]),
