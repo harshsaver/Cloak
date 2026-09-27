@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'demo.dart';
 import 'state/app_state.dart';
 import 'state/conversation_store.dart';
 import 'ui/home_screen.dart';
@@ -33,8 +34,15 @@ class CloakApp extends StatelessWidget {
   }
 }
 
-class _Root extends StatelessWidget {
+class _Root extends StatefulWidget {
   const _Root();
+
+  @override
+  State<_Root> createState() => _RootState();
+}
+
+class _RootState extends State<_Root> {
+  bool _demoApplied = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +50,10 @@ class _Root extends StatelessWidget {
     final store = context.watch<ConversationStore>();
     if (!app.ready || !store.loaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (kCloakDemo && !_demoApplied) {
+      _demoApplied = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => applyDemo(app, store));
     }
     return const HomeScreen();
   }

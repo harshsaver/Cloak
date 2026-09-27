@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../state/chat_view_model.dart';
 import 'theme.dart';
+import 'widgets.dart';
 
 /// The compact "Model ▾" button shown in the conversation header.
 class ModelPickerButton extends StatelessWidget {
@@ -16,7 +17,7 @@ class ModelPickerButton extends StatelessWidget {
       builder: (context, _) {
         return InkWell(
           borderRadius: BorderRadius.circular(7),
-          onTap: vm.isStreaming ? null : () => _showModelPicker(context, vm),
+          onTap: vm.isStreaming ? null : () => showModelPicker(context, vm),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
             decoration: BoxDecoration(
@@ -47,16 +48,30 @@ class ModelPickerButton extends StatelessWidget {
   }
 }
 
-Future<void> _showModelPicker(BuildContext context, ChatViewModel vm) {
-  return showDialog(
-    context: context,
-    builder: (context) => _ModelPickerDialog(vm: vm),
-  );
+/// Opens the model picker: a tall bottom sheet on phones, a dialog on desktop.
+Future<void> showModelPicker(BuildContext context, ChatViewModel vm) {
+  if (isCompact(context)) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (sheet) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(sheet).height * 0.78,
+          child: _ModelPickerDialog(vm: vm, sheet: true),
+        ),
+      ),
+    );
+  }
+  return showDialog(context: context, builder: (_) => _ModelPickerDialog(vm: vm));
 }
 
 class _ModelPickerDialog extends StatefulWidget {
   final ChatViewModel vm;
-  const _ModelPickerDialog({required this.vm});
+  final bool sheet;
+  const _ModelPickerDialog({required this.vm, this.sheet = false});
 
   @override
   State<_ModelPickerDialog> createState() => _ModelPickerDialogState();
@@ -88,11 +103,8 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
       builder: (context, _) {
         final query = _search.text.trim().toLowerCase();
         final filtered = vm.models.where((m) => query.isEmpty || m.toLowerCase().contains(query)).toList();
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460, maxHeight: 560),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
+        final body = Padding(
+              padding: widget.sheet ? const EdgeInsets.fromLTRB(16, 0, 16, 12) : const EdgeInsets.all(18),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +152,7 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
                               final model = filtered[i];
                               final selected = model == vm.selectedModel;
                               return ListTile(
-                                dense: true,
+                                dense: !widget.sheet,
                                 title: Text(model, maxLines: 2, overflow: TextOverflow.ellipsis),
                                 trailing: selected ? const Icon(Icons.check_rounded, size: 18) : null,
                                 onTap: () {
@@ -173,7 +185,12 @@ class _ModelPickerDialogState extends State<_ModelPickerDialog> {
                   ),
                 ],
               ),
-            ),
+            );
+        if (widget.sheet) return body;
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460, maxHeight: 560),
+            child: body,
           ),
         );
       },

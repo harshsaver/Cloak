@@ -7,6 +7,7 @@ import '../state/conversation_store.dart';
 import 'chat_screen.dart';
 import 'conversation_sidebar.dart';
 import 'settings_sheet.dart';
+import 'widgets.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   final AiProvider provider;
@@ -66,19 +67,43 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final store = context.watch<ConversationStore>();
     final wide = MediaQuery.of(context).size.width >= 820;
 
+    void allProviders() => Navigator.of(context).popUntil((r) => r.isFirst);
+
     final sidebar = ConversationSidebar(
       provider: widget.provider,
       selectedId: _selectedId,
       onSelect: wide ? (id) => setState(() => _selectedId = id) : _selectNarrow,
       onSwitchProvider: _switchProvider,
-      onAllProviders: () => Navigator.of(context).popUntil((r) => r.isFirst),
+      onAllProviders: allProviders,
+      showFooter: wide,
     );
 
     final errorBar = (store.errorText != null && store.isReadBlocked) ? _storeError(store) : null;
 
     if (!wide) {
       return Scaffold(
-        appBar: AppBar(title: Text(widget.provider.name), scrolledUnderElevation: 0),
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          titleSpacing: 0,
+          leading: IconButton(
+            tooltip: 'Providers',
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            onPressed: allProviders,
+          ),
+          title: ProviderSwitcher(
+            provider: widget.provider,
+            onSwitch: _switchProvider,
+            onAllProviders: allProviders,
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Settings',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => showSettingsSheet(context),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
         body: Column(children: [if (errorBar != null) errorBar, Expanded(child: sidebar)]),
       );
     }

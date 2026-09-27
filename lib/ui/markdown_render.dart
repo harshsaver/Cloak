@@ -226,7 +226,9 @@ class MarkdownText extends StatefulWidget {
   final String text;
   final Color color;
   final bool selectable;
-  const MarkdownText(this.text, {super.key, required this.color, this.selectable = true});
+  final double fontSize;
+  const MarkdownText(this.text,
+      {super.key, required this.color, this.selectable = true, this.fontSize = 15});
 
   @override
   State<MarkdownText> createState() => _MarkdownTextState();
@@ -251,7 +253,8 @@ class _MarkdownTextState extends State<MarkdownText> {
     _recognizers.clear();
 
     final scheme = Theme.of(context).colorScheme;
-    final base = TextStyle(fontSize: 15, height: 1.32, color: widget.color);
+    final fs = widget.fontSize;
+    final base = TextStyle(fontSize: fs, height: 1.32, color: widget.color);
     final linkColor = widget.color == Colors.white ? Colors.white : CloakColors.accent;
     final codeBg = widget.color == Colors.white
         ? Colors.white.withValues(alpha: 0.18)
@@ -266,7 +269,7 @@ class _MarkdownTextState extends State<MarkdownText> {
         case MdKind.paragraph:
           children.addAll(_inline(block.text, base, linkColor, codeBg));
         case MdKind.heading:
-          final size = block.level == 1 ? 22.0 : (block.level == 2 ? 19.0 : 16.5);
+          final size = block.level == 1 ? fs + 3 : (block.level == 2 ? fs + 1.5 : fs + 0.5);
           children.addAll(_inline(block.text, base.copyWith(fontSize: size, fontWeight: FontWeight.w700), linkColor, codeBg));
         case MdKind.code:
           if (block.language != null) {
@@ -277,7 +280,7 @@ class _MarkdownTextState extends State<MarkdownText> {
           }
           children.add(TextSpan(
             text: block.text,
-            style: base.copyWith(fontFamily: 'monospace', fontSize: 13.5, height: 1.4, backgroundColor: codeBg),
+            style: base.copyWith(fontFamily: 'monospace', fontSize: fs - 1.5, height: 1.4, backgroundColor: codeBg),
           ));
         case MdKind.bullet:
           for (var i = 0; i < block.items.length; i++) {

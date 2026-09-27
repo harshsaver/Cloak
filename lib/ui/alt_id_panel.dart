@@ -250,25 +250,16 @@ class _AltIdPanelState extends State<AltIdPanel> {
             const SizedBox(height: 6),
             for (final pair in _identity.customPairs)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(children: [
-                  Expanded(
-                    child: _field(ValueKey('${pair.id}-real'), 'Real', pair.real,
-                        (v) => setState(() => pair.real = v)),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(Icons.arrow_forward_rounded, size: 14),
-                  ),
-                  Expanded(
-                    child: _field(ValueKey('${pair.id}-alt'), 'Alt', pair.alt,
-                        (v) => setState(() => pair.alt = v)),
-                  ),
-                  IconButton(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _realAlt(
+                  _field(ValueKey('${pair.id}-real'), 'Real', pair.real, (v) => setState(() => pair.real = v)),
+                  _field(ValueKey('${pair.id}-alt'), 'Alt', pair.alt, (v) => setState(() => pair.alt = v)),
+                  trailing: IconButton(
+                    tooltip: 'Remove pair',
                     icon: const Icon(Icons.remove_circle_rounded, color: Colors.redAccent, size: 20),
                     onPressed: () => setState(() => _identity.customPairs.removeWhere((p) => p.id == pair.id)),
                   ),
-                ]),
+                ),
               ),
             Align(
               alignment: Alignment.centerLeft,
@@ -294,21 +285,41 @@ class _AltIdPanelState extends State<AltIdPanel> {
         children: [
           Text(label, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
           const SizedBox(height: 4),
-          Row(children: [
-            Expanded(
-              child: _field(ValueKey('$key-real-$_version'), 'Real', getReal(), (v) => setState(() => setReal(v))),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Icon(Icons.arrow_forward_rounded, size: 14),
-            ),
-            Expanded(
-              child: _field(ValueKey('$key-alt-$_version'), 'Alt', getAlt(), (v) => setState(() => setAlt(v))),
-            ),
-          ]),
+          _realAlt(
+            _field(ValueKey('$key-real-$_version'), 'Real', getReal(), (v) => setState(() => setReal(v))),
+            _field(ValueKey('$key-alt-$_version'), 'Alt', getAlt(), (v) => setState(() => setAlt(v))),
+          ),
         ],
       ),
     );
+  }
+
+  /// Real → Alt side by side on desktop; stacked on phones where each needs full width.
+  Widget _realAlt(Widget real, Widget alt, {Widget? trailing}) {
+    if (isCompact(context)) {
+      return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Expanded(
+          child: Column(children: [
+            real,
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 2),
+              child: Icon(Icons.arrow_downward_rounded, size: 14),
+            ),
+            alt,
+          ]),
+        ),
+        if (trailing != null) trailing,
+      ]);
+    }
+    return Row(children: [
+      Expanded(child: real),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6),
+        child: Icon(Icons.arrow_forward_rounded, size: 14),
+      ),
+      Expanded(child: alt),
+      if (trailing != null) trailing,
+    ]);
   }
 
   Widget _field(Key key, String hint, String initial, ValueChanged<String> onChanged) {

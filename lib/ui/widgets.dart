@@ -3,6 +3,63 @@ import 'package:flutter/material.dart';
 import '../models/provider.dart';
 import 'theme.dart';
 
+/// Phone-sized layout. Everything below this width gets the mobile treatment.
+bool isCompact(BuildContext context) => MediaQuery.sizeOf(context).width < 600;
+
+/// "OrcaRouter ▾" — switch between providers or go back to the provider list.
+class ProviderSwitcher extends StatelessWidget {
+  final AiProvider provider;
+  final ValueChanged<AiProvider> onSwitch;
+  final VoidCallback onAllProviders;
+  final bool showGlyph;
+  const ProviderSwitcher({
+    super.key,
+    required this.provider,
+    required this.onSwitch,
+    required this.onAllProviders,
+    this.showGlyph = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: 'Switch provider',
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        for (final option in AiProvider.all)
+          PopupMenuItem(
+            value: option.id,
+            child: Row(children: [
+              ProviderGlyph(provider: option, size: 24),
+              const SizedBox(width: 10),
+              Expanded(child: Text(option.name)),
+              if (option == provider) const Icon(Icons.check_rounded, size: 18),
+            ]),
+          ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: '__all__', child: Text('All providers')),
+      ],
+      onSelected: (value) {
+        if (value == '__all__') {
+          onAllProviders();
+        } else {
+          final option = AiProvider.byId(value);
+          if (option != null && option != provider) onSwitch(option);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (showGlyph) ...[ProviderGlyph(provider: provider, size: 26), const SizedBox(width: 8)],
+          Text(provider.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 2),
+          const Icon(Icons.expand_more_rounded, size: 20),
+        ]),
+      ),
+    );
+  }
+}
+
 /// A circular illustrated portrait (10–44) used as a conversation avatar.
 class PortraitAvatar extends StatelessWidget {
   final int number;

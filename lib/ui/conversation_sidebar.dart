@@ -8,6 +8,7 @@ import '../models/provider.dart';
 import '../state/conversation_store.dart';
 import 'markdown_render.dart';
 import 'settings_sheet.dart';
+import 'theme.dart';
 import 'widgets.dart';
 
 class ConversationSidebar extends StatefulWidget {
@@ -16,6 +17,9 @@ class ConversationSidebar extends StatefulWidget {
   final ValueChanged<String> onSelect;
   final ValueChanged<AiProvider> onSwitchProvider;
   final VoidCallback onAllProviders;
+
+  /// The provider switcher + settings footer. Phones move these into the app bar.
+  final bool showFooter;
   const ConversationSidebar({
     super.key,
     required this.provider,
@@ -23,6 +27,7 @@ class ConversationSidebar extends StatefulWidget {
     required this.onSelect,
     required this.onSwitchProvider,
     required this.onAllProviders,
+    this.showFooter = true,
   });
 
   @override
@@ -63,24 +68,25 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
             query.isEmpty || c.title.toLowerCase().contains(query) || c.model.toLowerCase().contains(query))
         .toList();
 
+    final compact = isCompact(context);
     return Container(
-      color: scheme.surface.withValues(alpha: 0.6),
+      color: compact ? Colors.transparent : scheme.surface.withValues(alpha: 0.6),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 10, 8),
+            padding: EdgeInsets.fromLTRB(compact ? 20 : 18, compact ? 4 : 14, 10, 8),
             child: Row(children: [
-              const Text('Messages', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              Text('Messages', style: TextStyle(fontSize: compact ? 32 : 22, fontWeight: FontWeight.w800)),
               const Spacer(),
               IconButton(
                 tooltip: 'New chat',
-                icon: const Icon(Icons.edit_square, size: 20),
+                icon: Icon(Icons.edit_square, size: compact ? 24 : 20, color: CloakColors.accent),
                 onPressed: store.isReadBlocked ? null : _newChat,
               ),
             ]),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            padding: EdgeInsets.fromLTRB(compact ? 16 : 14, 0, compact ? 16 : 14, 10),
             child: TextField(
               controller: _query,
               onChanged: (_) => setState(() {}),
@@ -115,7 +121,7 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 8),
                     itemCount: items.length,
                     itemBuilder: (context, i) {
                       final conversation = items[i];
@@ -130,8 +136,10 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
                     },
                   ),
           ),
-          const Divider(height: 1),
-          _footer(scheme),
+          if (widget.showFooter) ...[
+            const Divider(height: 1),
+            _footer(scheme),
+          ],
         ],
       ),
     );
@@ -141,35 +149,10 @@ class _ConversationSidebarState extends State<ConversationSidebar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(children: [
-        ProviderGlyph(provider: widget.provider, size: 28),
-        const SizedBox(width: 8),
-        PopupMenuButton<String>(
-          tooltip: 'Switch provider',
-          itemBuilder: (context) => [
-            for (final option in AiProvider.all)
-              PopupMenuItem(
-                value: option.id,
-                child: Row(children: [
-                  Icon(option == widget.provider ? Icons.check_rounded : option.icon, size: 16),
-                  const SizedBox(width: 8),
-                  Text(option.name),
-                ]),
-              ),
-            const PopupMenuDivider(),
-            const PopupMenuItem(value: '__all__', child: Text('All providers')),
-          ],
-          onSelected: (value) {
-            if (value == '__all__') {
-              widget.onAllProviders();
-            } else {
-              final option = AiProvider.byId(value);
-              if (option != null && option != widget.provider) widget.onSwitchProvider(option);
-            }
-          },
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(widget.provider.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const Icon(Icons.expand_more_rounded, size: 16),
-          ]),
+        ProviderSwitcher(
+          provider: widget.provider,
+          onSwitch: widget.onSwitchProvider,
+          onAllProviders: widget.onAllProviders,
         ),
         const Spacer(),
         IconButton(
@@ -270,6 +253,69 @@ class _ConversationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final compact = isCompact(context);
+    final avatar = compact ? 52.0 : 38.0;
+
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PortraitAvatar(number: portraitNumber(conversation.id), size: avatar),
+        SizedBox(width: compact ? 12 : 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: compact ? 2 : 0),
+              Row(children: [
+                Expanded(
+                  child: Text(
+                    conversation.title.isEmpty ? 'New message' : conversation.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: compact ? 16.5 : 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(_dateLabel,
+                    style: TextStyle(fontSize: compact ? 13.5 : 10, color: scheme.onSurfaceVariant)),
+                if (compact) ...[
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded, size: 18, color: scheme.onSurfaceVariant.withValues(alpha: 0.6)),
+                ],
+              ]),
+              SizedBox(height: compact ? 3 : 3),
+              Text(
+                _preview,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: compact ? 14.5 : 12,
+                  height: 1.3,
+                  color: draft.isEmpty ? scheme.onSurfaceVariant : Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (compact) {
+      // Phone: edge-to-edge row, inset divider under the text, no selection tint.
+      return InkWell(
+        onTap: onTap,
+        onLongPress: () => _showSheet(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 12, 0),
+          child: Column(children: [
+            content,
+            const SizedBox(height: 10),
+            Divider(height: 1, indent: avatar + 12, color: scheme.outlineVariant.withValues(alpha: 0.35)),
+          ]),
+        ),
+      );
+    }
+
     return GestureDetector(
       onSecondaryTapDown: (details) => _showMenu(context, details.globalPosition),
       onLongPress: () => _showMenu(context, null),
@@ -279,45 +325,43 @@ class _ConversationRow extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PortraitAvatar(number: portraitNumber(conversation.id), size: 38),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Expanded(
-                          child: Text(
-                            conversation.title.isEmpty ? 'New message' : conversation.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(_dateLabel, style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant)),
-                      ]),
-                      const SizedBox(height: 3),
-                      Text(
-                        _preview,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: draft.isEmpty ? scheme.onSurfaceVariant : Colors.orange),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), child: content),
         ),
       ),
     );
+  }
+
+  Future<void> _showSheet(BuildContext context) async {
+    final value = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              conversation.title.isEmpty ? 'New message' : conversation.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Rename'),
+            onTap: () => Navigator.pop(context, 'rename'),
+          ),
+          ListTile(
+            leading: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
+            title: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            onTap: () => Navigator.pop(context, 'delete'),
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+    if (value == 'rename') onRename();
+    if (value == 'delete') onDelete();
   }
 
   void _showMenu(BuildContext context, Offset? position) async {

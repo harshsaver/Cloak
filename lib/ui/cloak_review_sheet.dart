@@ -22,11 +22,9 @@ class _CloakReviewSheetState extends State<CloakReviewSheet> {
     final candidates = _review.available;
     final outgoing = _review.outgoing.where((m) => m.role != 'system').toList();
 
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620, maxHeight: 680),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+    final compact = isCompact(context);
+    final content = Padding(
+          padding: EdgeInsets.all(compact ? 16 : 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +107,12 @@ class _CloakReviewSheetState extends State<CloakReviewSheet> {
               ),
             ],
           ),
-        ),
+        );
+    if (compact) return Dialog.fullscreen(child: SafeArea(child: content));
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620, maxHeight: 680),
+        child: content,
       ),
     );
   }

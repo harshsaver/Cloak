@@ -68,6 +68,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Demo mode only: an in-memory key so screens past the key gate can render.
+  /// Never persisted to the keystore or disk.
+  void debugSetKey(AiProvider provider, String key) {
+    _keys[provider.id] = key;
+    _loaded.add(provider.id);
+    notifyListeners();
+  }
+
   Future<void> setKey(String? value, AiProvider provider) async {
     final trimmed = value?.trim();
     final key = (trimmed != null && trimmed.isNotEmpty) ? trimmed : null;

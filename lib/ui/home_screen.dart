@@ -5,6 +5,7 @@ import '../models/provider.dart';
 import '../state/app_state.dart';
 import 'settings_sheet.dart';
 import 'theme.dart';
+import 'widgets.dart';
 import 'workspace_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,6 +17,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isCompact(context)) return _PhoneHome(onOpen: (p) => _open(context, p));
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -81,6 +83,155 @@ class HomeScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Phone home: large title, a short Cloak intro, and an iOS-style grouped list.
+class _PhoneHome extends StatelessWidget {
+  final ValueChanged<AiProvider> onOpen;
+  const _PhoneHome({required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final app = context.watch<AppState>();
+    final group = CloakColors.surface(brightness);
+
+    return Scaffold(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            Row(children: [
+              const SizedBox(width: 4),
+              const Expanded(
+                child: Text('Cloak', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+              ),
+              IconButton(
+                tooltip: 'Settings',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => showSettingsSheet(context),
+              ),
+            ]),
+            const SizedBox(height: 14),
+
+            // Intro card: what Cloak does, with the mascot.
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: group, borderRadius: BorderRadius.circular(18)),
+              child: Row(children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.asset('assets/brand/app_icon_1024.png', width: 64, height: 64, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Share less of yourself',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Cloak gives your personal details a stand-in before they reach the AI.',
+                      style: TextStyle(fontSize: 14, height: 1.3, color: scheme.onSurfaceVariant),
+                    ),
+                  ]),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 26),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 8),
+              child: Text('CHOOSE A PROVIDER',
+                  style: TextStyle(
+                      fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: 0.4, color: scheme.onSurfaceVariant)),
+            ),
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(color: group, borderRadius: BorderRadius.circular(18)),
+              child: Column(children: [
+                for (var i = 0; i < AiProvider.all.length; i++) ...[
+                  if (i > 0) Divider(height: 1, indent: 70, color: scheme.outlineVariant.withValues(alpha: 0.35)),
+                  _ProviderRow(provider: AiProvider.all[i], app: app, onTap: () => onOpen(AiProvider.all[i])),
+                ],
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Text(
+                'Bring your own API key. Add or change keys in Settings.',
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProviderRow extends StatelessWidget {
+  final AiProvider provider;
+  final AppState app;
+  final VoidCallback onTap;
+  const _ProviderRow({required this.provider, required this.app, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasKey = app.hasKey(provider);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+        child: Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(11),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [provider.tint, Color.lerp(provider.tint, Colors.black, 0.18)!],
+              ),
+            ),
+            child: Icon(provider.icon, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Flexible(
+                  child: Text(provider.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600)),
+                ),
+                if (hasKey)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('Ready',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.green)),
+                  ),
+              ]),
+              const SizedBox(height: 2),
+              Text(provider.tagline,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13.5, color: scheme.onSurfaceVariant)),
+            ]),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
+        ]),
       ),
     );
   }

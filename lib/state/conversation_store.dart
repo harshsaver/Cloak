@@ -13,9 +13,21 @@ class ConversationStore extends ChangeNotifier {
   String? errorText;
   bool isReadBlocked = false;
   bool _loaded = false;
+  bool _demo = false;
   File? _file;
 
   bool get loaded => _loaded;
+
+  /// Demo mode only: replace conversations in memory. Nothing is written to disk
+  /// for the rest of the session, so real saved chats are never touched.
+  void debugSeed(List<Conversation> conversations) {
+    _demo = true;
+    _conversations = conversations;
+    isReadBlocked = false;
+    errorText = null;
+    _loaded = true;
+    notifyListeners();
+  }
 
   Future<void> init() async {
     _file = await AppPaths.supportFile('conversations.json');
@@ -133,7 +145,7 @@ class ConversationStore extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
-    if (isReadBlocked) return;
+    if (isReadBlocked || _demo) return;
     final file = _file;
     if (file == null) return;
     try {

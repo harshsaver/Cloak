@@ -5,8 +5,17 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/provider.dart';
 import '../services/secret_store.dart';
 import '../state/app_state.dart';
+import 'widgets.dart';
 
 Future<void> showSettingsSheet(BuildContext context) {
+  if (isCompact(context)) {
+    return Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Settings'), scrolledUnderElevation: 0),
+        body: const SafeArea(top: false, child: _SettingsForm(showHeader: false)),
+      ),
+    ));
+  }
   return showDialog(
     context: context,
     builder: (_) => const _SettingsDialog(),
@@ -30,7 +39,8 @@ class _SettingsDialog extends StatelessWidget {
 }
 
 class _SettingsForm extends StatefulWidget {
-  const _SettingsForm();
+  final bool showHeader;
+  const _SettingsForm({this.showHeader = true});
   @override
   State<_SettingsForm> createState() => _SettingsFormState();
 }
@@ -97,6 +107,7 @@ class _SettingsFormState extends State<_SettingsForm> {
 
     return Column(
       children: [
+        if (widget.showHeader) ...[
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
           child: Row(
@@ -108,6 +119,7 @@ class _SettingsFormState extends State<_SettingsForm> {
           ),
         ),
         const Divider(height: 1),
+        ],
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -175,13 +187,21 @@ class _SettingsFormState extends State<_SettingsForm> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(children: [
-            Expanded(
-              child: Text(
-                _status(app, provider),
-                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-              ),
+          if (isCompact(context))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(_status(app, provider), style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
             ),
+          Row(children: [
+            if (isCompact(context))
+              const Spacer()
+            else
+              Expanded(
+                child: Text(
+                  _status(app, provider),
+                  style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                ),
+              ),
             if (provider.apiKeysUrl != null)
               TextButton(
                 onPressed: () => launchUrl(Uri.parse(provider.apiKeysUrl!), mode: LaunchMode.externalApplication),

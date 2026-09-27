@@ -1,7 +1,7 @@
 name: cloak
 description: "Cloak — chat with your choice of AI models while keeping your identity to yourself: a native Alt ID swaps personal details for a realistic stand-in, plus User-Agent and HTTP/SOCKS5 network obfuscation. Flutter (macOS/iOS/Android/Windows)."
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.9.0
