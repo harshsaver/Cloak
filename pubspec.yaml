@@ -1,7 +1,7 @@
 name: cloak
 description: "Cloak — chat with your choice of AI models while keeping your identity to yourself: a native Alt ID swaps personal details for a realistic stand-in, plus User-Agent and HTTP/SOCKS5 network obfuscation. Flutter (macOS/iOS/Android/Windows)."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.9.0
@@ -24,9 +24,27 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
   assets:
     - assets/portraits/
     - assets/brand/
+
+# App icon: the disguised Cloak mascot. Regenerate with:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/brand/app_icon_1024.png"
+  ios: true
+  remove_alpha_ios: true
+  android: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#6E7551"
+  adaptive_icon_foreground: "assets/brand/app_icon_1024.png"
+  macos:
+    generate: true
+    image_path: "assets/brand/app_icon_1024.png"
+  windows:
+    generate: true
+    image_path: "assets/brand/app_icon_1024.png"
