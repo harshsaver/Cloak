@@ -224,7 +224,7 @@ class _ProviderRow extends StatelessWidget {
               ]),
               const SizedBox(height: 2),
               Text(provider.tagline,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 13.5, color: scheme.onSurfaceVariant)),
             ]),
